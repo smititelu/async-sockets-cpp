@@ -38,6 +38,7 @@ public:
     bool isClosed = false;
 
     explicit BaseSocket(FDR_ON_ERROR, SocketType sockType = TCP, int socketId = -1);
+    virtual ~BaseSocket();
 
     virtual void Close();
 

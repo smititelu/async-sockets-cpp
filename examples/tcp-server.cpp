@@ -3,56 +3,76 @@
 
 using namespace std;
 
-int main()
-{
-    // Initialize server socket..
-    TCPServer tcpServer;
+vector<TCPSocket*> clients;
 
-    // When a new client connected:
-    tcpServer.onNewConnection = [&](TCPSocket *newClient) {
-        cout << "New client: [";
-        cout << newClient->remoteAddress() << ":" << newClient->remotePort() << "]" << endl;
+int main() {
+	// Initialize server socket..
+	TCPServer tcpServer;
 
-        newClient->onMessageReceived = [newClient](string message) {
-            cout << newClient->remoteAddress() << ":" << newClient->remotePort() << " => " << message << endl;
-            newClient->Send("OK!");
-        };
-        
-        // If you want to use raw bytes
-        /*
-        newClient->onRawMessageReceived = [newClient](const char* message, int length) {
-            cout << newClient->remoteAddress() << ":" << newClient->remotePort() << " => " << message << "(" << length << ")" << endl;
-            newClient->Send("OK!");
-        };
-        */
-        
-        newClient->onSocketClosed = [newClient]() {
-            cout << "Socket closed:" << newClient->remoteAddress() << ":" << newClient->remotePort() << endl;
-        };
-    };
+	// When a new client connected:
+	tcpServer.onNewConnection = [&](TCPSocket *newClient) {
+		clients.push_back(newClient);
 
-    // Bind the server to a port.
-    tcpServer.Bind(8888, [](int errorCode, string errorMessage) {
-        // BINDING FAILED:
-        cout << errorCode << " : " << errorMessage << endl;
-    });
+		newClient->onSocketClosed = [newClient]() {
+			int position = 0;
+			for (vector<TCPSocket*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+				if (newClient == *it) {
+					break;
+				}
+				position ++;
+			}
+			clients.erase(clients.begin() + position);
+		};
 
-    // Start Listening the server.
-    tcpServer.Listen([](int errorCode, string errorMessage) {
-        // LISTENING FAILED:
-        cout << errorCode << " : " << errorMessage << endl;
-    });
+		newClient->onMessageReceived = [newClient](string message) {
+			cout << message << endl;
+		};
+	};
 
-    // You should do an input loop so the program will not terminated immediately:
-    string input;
-    getline(cin, input);
-    while (input != "exit")
-    {
-        getline(cin, input);
-    }
+	// Bind the server to a port.
+	tcpServer.Bind(80, [](int errorCode, string errorMessage) {
+		// BINDING FAILED:
+		cout << errorCode << " : " << errorMessage << endl;
+	});
 
-    // Close the server before exiting the program.
-    tcpServer.Close();
+	// Start Listening the server.
+	tcpServer.Listen([](int errorCode, string errorMessage) {
+		// LISTENING FAILED:
+		cout << errorCode << " : " << errorMessage << endl;
+	});
 
-    return 0;
+	string input;
+	getline(cin, input);
+	while (input != "exit") {
+		// commands local to server
+		if (input.compare("help") == 0) {
+			cout << "Server local commands:" << endl;
+			cout << "  help        - prints this" << endl;
+			cout << "  count       - prints nr of connected clients" << endl;
+			cout << "  list        - prints the connected clients" << endl;
+			cout << "Client commands: strat with \"do\"" << endl;
+			cout << "  do die      - kill all the clients" << endl;
+			cout << "  do info     - info from all the clients" << endl;
+		} else if (input.compare("count") == 0) {
+			cout << clients.size() << endl;
+		} else if (input.compare("list") == 0) {
+			for (vector<TCPSocket*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+				cout << (*it)->remoteAddress() << ":" << (*it)->remotePort() << endl;
+			}
+
+		// commands sent to clients => start with "do "
+		} else if (input.compare(0, 3, "do ") == 0) {
+			for (vector<TCPSocket*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+				(*it)->Send(input.substr(3));
+			}
+		}
+
+		cout << endl;
+		getline(cin, input);
+	}
+
+	// Close the server before exiting the program.
+	tcpServer.Close();
+
+	return 0;
 }

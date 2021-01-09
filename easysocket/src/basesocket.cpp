@@ -21,6 +21,10 @@ BaseSocket::BaseSocket(std::function<void(int, std::string)> onError, SocketType
     }
 }
 
+BaseSocket::~BaseSocket()
+{
+}
+
 void BaseSocket::Close()
 {
     if(isClosed) return;

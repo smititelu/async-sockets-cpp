@@ -17,17 +17,18 @@ CC		:= g++
 #Flags, Libraries and Includes
 CFLAGS.common	:= -std=c++17 -m$(BITS) -Wall -Wextra
 CFLAGS.debug 	:= $(CFLAGS.common) -g
-CFLAGS.release	:= $(CFLAGS.common) -Werror -O3
+CFLAGS.release	:= $(CFLAGS.common) -O3
 CFLAGS			?= $(CFLAGS.$(BUILD))
-LIB		:= -L$(TARGETDIR) -leasysocket -lpthread -Wl,-rpath='$${ORIGIN}'
+LIB		:= -static -pthread -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 INC		:= -I$(CURDIR)/../easysocket/include
+SRC		:= $(CURDIR)/../easysocket/src/tcpserver.cpp $(CURDIR)/../easysocket/src/tcpsocket.cpp $(CURDIR)/../easysocket/src/basesocket.cpp
 
 build:
-	(cd ../easysocket && make TARGETDIR="$(TARGETDIR)")
-	$(CC) $(CFLAGS) $(INC) tcp-client.cpp -o $(TARGETDIR)/$(call MakeExe,tcp-client) $(LIB)
-	$(CC) $(CFLAGS) $(INC) udp-client.cpp -o $(TARGETDIR)/$(call MakeExe,udp-client) $(LIB)
-	$(CC) $(CFLAGS) $(INC) tcp-server.cpp -o $(TARGETDIR)/$(call MakeExe,tcp-server) $(LIB)
-	$(CC) $(CFLAGS) $(INC) udp-server.cpp -o $(TARGETDIR)/$(call MakeExe,udp-server) $(LIB)
+#	(cd ../easysocket && make TARGETDIR="$(TARGETDIR)")
+	$(CC) $(CFLAGS) $(INC) tcp-client.cpp $(SRC) -o $(TARGETDIR)/$(call MakeExe,tcp-client) $(LIB)
+	$(CC) $(CFLAGS) $(INC) tcp-server.cpp $(SRC) -o $(TARGETDIR)/$(call MakeExe,tcp-server) $(LIB)
+#	$(CC) $(CFLAGS) $(INC) udp-client.cpp -o $(TARGETDIR)/$(call MakeExe,udp-client) $(LIB)
+#	$(CC) $(CFLAGS) $(INC) udp-server.cpp -o $(TARGETDIR)/$(call MakeExe,udp-server) $(LIB)
 
 template:
 	$(call MD,$(TARGETDIR))

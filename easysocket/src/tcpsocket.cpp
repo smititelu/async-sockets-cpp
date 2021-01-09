@@ -22,6 +22,7 @@ int TCPSocket::Send(const char *bytes, size_t byteslength)
     return sent;
 }
 
+/*
 void TCPSocket::Connect(std::string host, uint16_t port, std::function<void()> onConnected, std::function<void(int, std::string)> onError)
 {
     struct addrinfo hints, *res, *it;
@@ -47,6 +48,7 @@ void TCPSocket::Connect(std::string host, uint16_t port, std::function<void()> o
 
     this->Connect((uint32_t)this->address.sin_addr.s_addr, port, onConnected, onError);
 }
+*/
 
 void TCPSocket::Connect(uint32_t ipv4, uint16_t port, std::function<void()> onConnected, std::function<void(int, std::string)> onError)
 {
